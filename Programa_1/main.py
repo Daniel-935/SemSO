@@ -1,4 +1,5 @@
 import os
+import time
 
 # *Seccion de funciones de operaciones basicas
 def suma(a ,b):
@@ -18,13 +19,15 @@ def residuo(a, b):
 
 # *Funcion para buscar el id dentro de la lista de procesos
 def buscarId(id):
-  for proceso in procesos:
+  for proceso in auxLote:
     if proceso["id"] == id:
       return True
   return False
 
-# *Lista para guardar los procesos agregados
+# *Lista para guardar los procesos agregados, esta lista guarda cada lote de procesos, la otra guarda los procesos de dicho lote
 procesos = []
+auxLote = []
+tiempoMax = 0
 
 numProcesos = 0
 
@@ -43,7 +46,21 @@ while(True):
     os.system("cls")
     continue
 
+# *Se obtiene el numero de lotes a realizar
+numLotes = numProcesos // 4
+
 for i in range(0, numProcesos):
+  
+  # *Comprueba con multiplos de 4 para agregar a la lista de procesos cada lote
+  if i % 4 == 0 and i != 0:
+    procesos.append(auxLote)
+    auxLote = []
+  
+  # *En caso de que no se llegue ni a un lote o no se termine uno, guarda en automatico el ultimo lote que se estaba creando
+  if i == numProcesos - 1:
+    procesos.append(auxLote)
+    auxLote = []
+
   os.system("cls")
   nombre = input("Ingrese un nombre: ")
 
@@ -99,6 +116,7 @@ for i in range(0, numProcesos):
         input()
         os.system("cls")
         continue
+      tiempoMax += tiempo
       break
     except ValueError:
       print("Ingrese un numero valido")
@@ -107,7 +125,7 @@ for i in range(0, numProcesos):
       continue
 
   # *Guarda todo en un diccionario y lo agrega a la lista de procesos
-  procesos.append({
+  auxLote.append({
     "nombre": nombre,
     "id": idUser,
     "operacion": operacion,
@@ -115,5 +133,24 @@ for i in range(0, numProcesos):
     "resultado": 0
   })
 
-print(procesos)
 
+# !Bucle para imprimir los procesos
+contadorGlob = 0
+# for i in range(0, len(procesos)):
+#   for j in range(0, len(procesos[i])):
+#     print("------------------------------------")
+#     print(f"| Lote en ejecucion: {i + 1}        Contador global(seg.):{contadorGlob}", end="\r")
+#     print(f"------------------------------------")
+
+#     contadorGlob+=1
+#     # *Detiene el programa cada segundo
+#     time.sleep(1)
+
+for i in range(0, tiempoMax):
+  print("\033[K", end="")
+  print(f"------------------------------------")
+  print(f"| Lote en ejecucion: {i + 1}        Contador global(seg.):{contadorGlob}")
+  print(f"------------------------------------")
+  contadorGlob+=1
+  time.sleep(1)
+  
