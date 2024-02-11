@@ -52,3 +52,10 @@ def generarOperaciones(p: int):
 def sortLotes(pro):
   for lote in pro:
     lote.sort(key = lambda x: x["id"])
+
+#*Para saber si los lotes estan vacios
+def isEmpty(pro):
+  for lote in pro:
+    if len(lote) > 0:
+      return False
+  return True

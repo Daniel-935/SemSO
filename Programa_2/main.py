@@ -2,8 +2,27 @@ import os
 from tabulate import tabulate
 import time
 import sys
-from msvcrt import getch
+import msvcrt
 from funciones import *
+
+pausa = False
+#*Regresa el metodo para estar esperando en todo momento el input
+def getWatch():
+  return msvcrt.kbhit()
+
+def cambiaPausa():
+  global pausa
+  if getWatch():
+    char = msvcrt.getch()
+    if char.lower() == b'p':
+      pausa = True
+    elif char.lower() == b'c':
+      pausa = False
+    #*Ya que la funcion solo es para pausar, esto se hace para que no tenga problemas con el input
+    elif char.lower() == b'e':
+      pausa = False
+    elif char.lower() == b'w':
+      pausa = False
 
 numProcesos = 0
 while True:
@@ -60,69 +79,131 @@ sortLotes(procesos)
 columnas = ["Datos Generales:", "Lote en ejecucion:", "Proceso ejecutando:", "Procesos terminados:"]
 contadorGlobal = 0
 procesosTerminadosList = []
-pausa = False
 
-for indLote, lote in enumerate(procesos):
-  while len(lote) > 0:
-    proceso = lote.pop(0)
+while True:
+  if getWatch():
+    char = msvcrt.getch()
+    if char.lower() == b'p':
+      pausa = True
+    elif char.lower() == b'c':
+      pausa = False
+  if pausa:
+    while pausa:
+      cambiaPausa()
+      time.sleep(0.1)
 
-    while proceso["tiempo"] > 0:
-      contadorGlobal += 1
-      noLotes = max(0, len(procesos) - indLote)
-      datosGenerales = f"No. lotes pendientes: {noLotes}\nContador global: {contadorGlobal}"
+  for indLote, lote in enumerate(procesos):
+    while len(lote) > 0:
+      proceso = lote.pop(0)
+      while proceso["tiempo"] > 0:
 
-      loteEjecucion = "\n".join([f"ID: {proceso['id']} | Tiempo: {proceso['tiempo']} | Tiempo transcurrido: {proceso['tiempoTrans']}" for proceso in lote])
+        if getWatch():
+          char = msvcrt.getch()
+          if char.lower() == b'p':
+            pausa = True
+          elif char.lower() == b'c':
+            pausa = False
+          elif char.lower() == b'e':
+            lote.append(proceso)
+            proceso = None
+            time.sleep(0.1)
+            break
+          elif char.lower() == b'w':
+            proceso["error"] = True
+            proceso["resultado"] = "Error"
+            procesosTerminadosList.append(proceso)
+            proceso = None
+            time.sleep(0.1)
+            break
+        if pausa:
+          while pausa:
+            cambiaPausa()
+            time.sleep(0.1)
+        
+        contadorGlobal += 1
+        noLotes = max(0, len(procesos) - indLote)
+        datosGenerales = f"No. lotes pendientes: {noLotes}\nContador global: {contadorGlobal}"
 
-      procesoEjecutando = f"ID: {proceso['id']}\nOperacion: {proceso['operacion']}\nValores: {proceso['fNum']} {proceso['sNum']}\nTiempo: {proceso['tiempoTrans']}\nTiempo restante: {proceso['tiempo']}"
-      proceso["tiempoTrans"] += 1
-      proceso['tiempo'] -= 1
+        loteEjecucion = "\n".join([f"ID: {proceso['id']} | Tiempo: {proceso['tiempo']} | Tiempo transcurrido: {proceso['tiempoTrans']}" for proceso in lote])
 
-      # *Linea para mostrar todos los procesos terminados
-      if not procesosTerminadosList:
-        procesosTerminados = "No hay procesos\nterminados"
-      else:
-        procesosTerminados = "\n".join([f"Programa: {proceso['id']} | Operacion: {proceso['operacion']} | Datos: {proceso['fNum']} {proceso['sNum']} | {'Resultado: '+str(proceso['resultado']) if not proceso['error'] else 'Error'}" for ind, proceso in enumerate(procesosTerminadosList)])
+        procesoEjecutando = f"ID: {proceso['id']}\nOperacion: {proceso['operacion']}\nValores: {proceso['fNum']} {proceso['sNum']}\nTiempo: {proceso['tiempoTrans']}\nTiempo restante: {proceso['tiempo']}"
+        proceso["tiempoTrans"] += 1
+        proceso['tiempo'] -= 1
 
-      fila = [datosGenerales, loteEjecucion, procesoEjecutando, procesosTerminados]
+        # *Linea para mostrar todos los procesos terminados
+        if not procesosTerminadosList:
+          procesosTerminados = "No hay procesos\nterminados"
+        else:
+          procesosTerminados = "\n".join([f"Programa: {proceso['id']} | Operacion: {proceso['operacion']}\nDatos: {proceso['fNum']} {proceso['sNum']} | {'Resultado: '+str(proceso['resultado']) if not proceso['error'] else 'Error'}\n" for ind, proceso in enumerate(procesosTerminadosList)])
 
-      sys.stdout.write('\033[H')
-      sys.stdout.write(tabulate([fila], headers=columnas, tablefmt='fancy_grid'))
-      sys.stdout.flush()
-      time.sleep(1)
-  
-    if proceso["operacion"] == 1:
-        proceso["resultado"] = suma(proceso["fNum"], proceso["sNum"])
-    elif proceso["operacion"] == 2:
-      proceso["resultado"] = resta(proceso["fNum"], proceso["sNum"])
-    elif proceso["operacion"] == 3:
-      proceso["resultado"] = multiplicacion(proceso["fNum"], proceso["sNum"])
-    elif proceso["operacion"] == 4:
-      proceso["resultado"] = division(proceso["fNum"], proceso["sNum"])
-    elif proceso["operacion"] == 5:
-      proceso["resultado"] = residuo(proceso["fNum"], proceso["sNum"])
+        fila = [datosGenerales, loteEjecucion, procesoEjecutando, procesosTerminados]
 
-    procesosTerminadosList.append(proceso)
-  
-  datosGenerales = f"No. lotes pendientes: {noLotes}\nContador global: {contadorGlobal}"
+        sys.stdout.write('\033[H')
+        sys.stdout.write(tabulate([fila], headers=columnas, tablefmt='fancy_grid', maxcolwidths=[None, 47, None, None]))
+        sys.stdout.flush()
+        time.sleep(1)
+
+        #!Casos de interrupcion o error
+        if getWatch():
+          char = msvcrt.getch()
+          if char.lower() == b'p':
+            pausa = True
+          elif char.lower() == b'c':
+            pausa = False
+          elif char.lower() == b'e':
+            lote.append(proceso)
+            proceso = None
+            time.sleep(0.1)
+            break
+          elif char.lower() == b'w':
+            proceso["error"] = True
+            proceso["resultado"] = "Error"
+            procesosTerminadosList.append(proceso)
+            proceso = None
+            time.sleep(0.1)
+            break
+        if pausa:
+          while pausa:
+            cambiaPausa()
+            time.sleep(0.1)
+      
+      if proceso is not None:
+        if proceso["operacion"] == 1:
+            proceso["resultado"] = suma(proceso["fNum"], proceso["sNum"])
+        elif proceso["operacion"] == 2:
+          proceso["resultado"] = resta(proceso["fNum"], proceso["sNum"])
+        elif proceso["operacion"] == 3:
+          proceso["resultado"] = multiplicacion(proceso["fNum"], proceso["sNum"])
+        elif proceso["operacion"] == 4:
+          proceso["resultado"] = division(proceso["fNum"], proceso["sNum"])
+        elif proceso["operacion"] == 5:
+          proceso["resultado"] = residuo(proceso["fNum"], proceso["sNum"])
+
+        procesosTerminadosList.append(proceso)
+    
+    datosGenerales = f"No. lotes pendientes: {noLotes}\nContador global: {contadorGlobal}"
+    loteEjecucion = " "
+    procesoEjecutando = " "
+    procesosTerminados = "\n".join([f"Programa: {proceso['id']} | Operacion: {proceso['operacion']}\nDatos: {proceso['fNum']} {proceso['sNum']} | {'Resultado: '+str(proceso['resultado']) if not proceso['error'] else 'Error'}\n" for ind, proceso in enumerate(procesosTerminadosList)])
+
+    fila = [datosGenerales, loteEjecucion, procesoEjecutando, procesosTerminados]
+
+    sys.stdout.write('\033[H')
+    sys.stdout.write(tabulate([fila], headers=columnas, tablefmt='fancy_grid', maxcolwidths=[None, 47, None, None]))
+    sys.stdout.flush()
+    os.system("cls")
+
+  datosGenerales = f"No. lotes pendientes: {len(lote)}\nContador global: {contadorGlobal}"
   loteEjecucion = " "
   procesoEjecutando = " "
-  procesosTerminados = "\n".join([f"Programa: {proceso['id']} | Operacion: {proceso['operacion']} | Datos: {proceso['fNum']} {proceso['sNum']} | {'Resultado: '+str(proceso['resultado']) if not proceso['error'] else 'Error'}" for ind, proceso in enumerate(procesosTerminadosList)])
+  procesosTerminados = "\n".join([f"Programa: {proceso['id']} | Operacion: {proceso['operacion']}\nDatos: {proceso['fNum']} {proceso['sNum']} | {'Resultado: '+str(proceso['resultado']) if not proceso['error'] else 'Error'}\n" for ind, proceso in enumerate(procesosTerminadosList)])
 
   fila = [datosGenerales, loteEjecucion, procesoEjecutando, procesosTerminados]
 
   sys.stdout.write('\033[H')
-  sys.stdout.write(tabulate([fila], headers=columnas, tablefmt='fancy_grid'))
+  sys.stdout.write(tabulate([fila], headers=columnas, tablefmt='fancy_grid', maxcolwidths=[None, 47, None, None]))
   sys.stdout.flush()
-  os.system("cls")
+  input("\nPresione <enter> para terminar el programa")
 
-datosGenerales = f"No. lotes pendientes: {len(lote)}\nContador global: {contadorGlobal}"
-loteEjecucion = " "
-procesoEjecutando = " "
-procesosTerminados = "\n".join([f"Programa: {proceso['id']} | Operacion: {proceso['operacion']} | Datos: {proceso['fNum']} {proceso['sNum']} | {'Resultado: '+str(proceso['resultado']) if not proceso['error'] else 'Error'}" for ind, proceso in enumerate(procesosTerminadosList)])
-
-fila = [datosGenerales, loteEjecucion, procesoEjecutando, procesosTerminados]
-
-sys.stdout.write('\033[H')
-sys.stdout.write(tabulate([fila], headers=columnas, tablefmt='fancy_grid'))
-sys.stdout.flush()
-input()
+  if isEmpty(procesos):
+    break
