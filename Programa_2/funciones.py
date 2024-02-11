@@ -48,3 +48,7 @@ def generarOperaciones(p: int):
       "operacion": operacion
     })
   return operaciones
+
+def sortLotes(pro):
+  for lote in pro:
+    lote.sort(key = lambda x: x["id"])
