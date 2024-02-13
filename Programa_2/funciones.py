@@ -42,10 +42,23 @@ def generarOperaciones(p: int):
     operacion = random.randint(1, 5)
     if b == 0 and (operacion == 5 or operacion == 4):
       b = 1
+
+    #*Crea el string de operacion
+    if operacion == 1:
+      operacionStr = "+"
+    elif operacion == 2:
+      operacionStr = "-"
+    elif operacion == 3:
+      operacionStr = "*"
+    elif operacion == 4:
+      operacionStr = "/"
+    elif operacion == 5:
+      operacionStr = "%"
     operaciones.append({
       "fNum": a,
       "sNum": b, 
-      "operacion": operacion
+      "operacion": operacion,
+      "operacionStr": operacionStr,
     })
   return operaciones
 

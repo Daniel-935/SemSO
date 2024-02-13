@@ -53,11 +53,13 @@ for i in range(0, numProcesos):
   fNum = op["fNum"]
   sNum = op["sNum"]
   operacion = op["operacion"]
+  operacionStr = op["operacionStr"]
 
   auxLote.append({
     "id": ids.pop(),
     "tiempo": tiempos.pop(),
     "operacion": operacion,
+    "operacionStr": operacionStr,
     "fNum": fNum,
     "sNum": sNum,
     "resultado": 0,
@@ -126,7 +128,7 @@ while True:
 
         loteEjecucion = "\n".join([f"ID: {proceso['id']} | Tiempo: {proceso['tiempo']} | Tiempo transcurrido: {proceso['tiempoTrans']}" for proceso in lote])
 
-        procesoEjecutando = f"ID: {proceso['id']}\nOperacion: {proceso['operacion']}\nValores: {proceso['fNum']} {proceso['sNum']}\nTiempo: {proceso['tiempoTrans']}\nTiempo restante: {proceso['tiempo']}"
+        procesoEjecutando = f"ID: {proceso['id']}\nOperacion: {proceso['operacionStr']}\nValores: {proceso['fNum']} {proceso['sNum']}\nTiempo: {proceso['tiempoTrans']}\nTiempo restante: {proceso['tiempo']}"
         proceso["tiempoTrans"] += 1
         proceso['tiempo'] -= 1
 
@@ -134,7 +136,7 @@ while True:
         if not procesosTerminadosList:
           procesosTerminados = "No hay procesos\nterminados"
         else:
-          procesosTerminados = "\n".join([f"Programa: {proceso['id']} | Operacion: {proceso['operacion']}\nDatos: {proceso['fNum']} {proceso['sNum']} | {'Resultado: '+str(proceso['resultado']) if not proceso['error'] else 'Error'}\n" for ind, proceso in enumerate(procesosTerminadosList)])
+          procesosTerminados = "\n".join([f"Programa: {proceso['id']} | Operacion: {proceso['operacionStr']}\nDatos: {proceso['fNum']} {proceso['sNum']} | {'Resultado: '+str(proceso['resultado']) if not proceso['error'] else 'Error'}\n" for ind, proceso in enumerate(procesosTerminadosList)])
 
         fila = [datosGenerales, loteEjecucion, procesoEjecutando, procesosTerminados]
 
@@ -184,7 +186,7 @@ while True:
     datosGenerales = f"No. lotes pendientes: {noLotes}\nContador global: {contadorGlobal}"
     loteEjecucion = " "
     procesoEjecutando = " "
-    procesosTerminados = "\n".join([f"Programa: {proceso['id']} | Operacion: {proceso['operacion']}\nDatos: {proceso['fNum']} {proceso['sNum']} | {'Resultado: '+str(proceso['resultado']) if not proceso['error'] else 'Error'}\n" for ind, proceso in enumerate(procesosTerminadosList)])
+    procesosTerminados = "\n".join([f"Programa: {proceso['id']} | Operacion: {proceso['operacionStr']}\nDatos: {proceso['fNum']} {proceso['sNum']} | {'Resultado: '+str(proceso['resultado']) if not proceso['error'] else 'Error'}\n" for ind, proceso in enumerate(procesosTerminadosList)])
 
     fila = [datosGenerales, loteEjecucion, procesoEjecutando, procesosTerminados]
 
@@ -196,7 +198,7 @@ while True:
   datosGenerales = f"No. lotes pendientes: {len(lote)}\nContador global: {contadorGlobal}"
   loteEjecucion = " "
   procesoEjecutando = " "
-  procesosTerminados = "\n".join([f"Programa: {proceso['id']} | Operacion: {proceso['operacion']}\nDatos: {proceso['fNum']} {proceso['sNum']} | {'Resultado: '+str(proceso['resultado']) if not proceso['error'] else 'Error'}\n" for ind, proceso in enumerate(procesosTerminadosList)])
+  procesosTerminados = "\n".join([f"Programa: {proceso['id']} | Operacion: {proceso['operacionStr']}\nDatos: {proceso['fNum']} {proceso['sNum']} | {'Resultado: '+str(proceso['resultado']) if not proceso['error'] else 'Error'}\n" for ind, proceso in enumerate(procesosTerminadosList)])
 
   fila = [datosGenerales, loteEjecucion, procesoEjecutando, procesosTerminados]
 
