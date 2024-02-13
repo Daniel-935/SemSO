@@ -18,11 +18,6 @@ def cambiaPausa():
       pausa = True
     elif char.lower() == b'c':
       pausa = False
-    #*Ya que la funcion solo es para pausar, esto se hace para que no tenga problemas con el input
-    elif char.lower() == b'e':
-      pausa = False
-    elif char.lower() == b'w':
-      pausa = False
 
 numProcesos = 0
 while True:
@@ -186,7 +181,7 @@ while True:
     datosGenerales = f"No. lotes pendientes: {noLotes}\nContador global: {contadorGlobal}"
     loteEjecucion = " "
     procesoEjecutando = " "
-    procesosTerminados = "\n".join([f"Programa: {proceso['id']} | Operacion: {proceso['operacionStr']}\nDatos: {proceso['fNum']} {proceso['sNum']} | {'Resultado: '+str(proceso['resultado']) if not proceso['error'] else 'Error'}\n" for ind, proceso in enumerate(procesosTerminadosList)])
+    procesosTerminados = "\n".join([f"Programa: {proceso['id']} | Operacion: {proceso['operacion']}\nDatos: {proceso['fNum']} {proceso['sNum']} | {'Resultado: '+str(proceso['resultado']) if not proceso['error'] else 'Error'}\n" for ind, proceso in enumerate(procesosTerminadosList)])
 
     fila = [datosGenerales, loteEjecucion, procesoEjecutando, procesosTerminados]
 
@@ -198,7 +193,7 @@ while True:
   datosGenerales = f"No. lotes pendientes: {len(lote)}\nContador global: {contadorGlobal}"
   loteEjecucion = " "
   procesoEjecutando = " "
-  procesosTerminados = "\n".join([f"Programa: {proceso['id']} | Operacion: {proceso['operacionStr']}\nDatos: {proceso['fNum']} {proceso['sNum']} | {'Resultado: '+str(proceso['resultado']) if not proceso['error'] else 'Error'}\n" for ind, proceso in enumerate(procesosTerminadosList)])
+  procesosTerminados = "\n".join([f"Programa: {proceso['id']} | Operacion: {proceso['operacion']}\nDatos: {proceso['fNum']} {proceso['sNum']} | {'Resultado: '+str(proceso['resultado']) if not proceso['error'] else 'Error'}\n" for ind, proceso in enumerate(procesosTerminadosList)])
 
   fila = [datosGenerales, loteEjecucion, procesoEjecutando, procesosTerminados]
 

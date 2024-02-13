@@ -41,7 +41,7 @@ def generarOperaciones(p: int):
     a, b = random.randint(1, 1000), random.randint(1, 1000)
     operacion = random.randint(1, 5)
     if b == 0 and (operacion == 5 or operacion == 4):
-      b = 1
+      operacion = 1
 
     #*Crea el string de operacion
     if operacion == 1:
