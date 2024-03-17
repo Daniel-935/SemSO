@@ -5,19 +5,13 @@ import sys
 import msvcrt
 from funciones import *
 
+global pausa
+global mostrarTabla
 pausa = False
+mostrarTabla = False
 #*Regresa el metodo para estar esperando en todo momento el input
 def getWatch():
   return msvcrt.kbhit()
-
-def cambiaPausa():
-  global pausa
-  if getWatch():
-    char = msvcrt.getch()
-    if char.lower() == b'p':
-      pausa = True
-    elif char.lower() == b'c':
-      pausa = False
 
 numProcesos = 0
 while True:
@@ -43,6 +37,8 @@ operaciones = generarOperaciones(numProcesos)
 procesos = []
 #*Lista para tener control sobre la memoria principal (procesos en ejecucion)
 memoriaPrincipal = []
+columnasPausa = ["ID", "Estado", "Operacion", "Datos", "Resultado", "Tiempos"]
+tablaPausa = []
 
 for i in range(0, numProcesos):
 
@@ -94,50 +90,108 @@ contadorGlobal = 0
 procesosTerminadosList = []
 procesosBloqueados = []
 
-while len(procesos) > 0 or len(memoriaPrincipal) > 0:
-
-  if getWatch():
-    char = msvcrt.getch()
-    if char.lower() == b'p':
-      pausa = True
-    elif char.lower() == b'c':
-      pausa = False
-  if pausa:
-    while pausa:
-      cambiaPausa()
-      time.sleep(0.1)
+while len(procesos) > 0 or len(memoriaPrincipal) > 0 or len(procesosBloqueados) > 0:
 
   #*Obtiene proceso a ejecutar
   #*Comprueba si hay procesos en la memoria principal (todos en bloqueado)
   if len(memoriaPrincipal) != 0 and len(procesosBloqueados) < 4:
     procesoEjecutar = memoriaPrincipal.pop(0)
   else:
+
+    contadorGlobal += 1
+
     if getWatch():
       char = msvcrt.getch()
       if char.lower() == b'p':
         pausa = True
       elif char.lower() == b'c':
         pausa = False
-      elif char.lower() == b'e':
-        procesosBloqueados.append(procesoEjecutar)
-        procesoEjecutar = None
-        time.sleep(0.1)
-        break
-      elif char.lower() == b'w':
-        procesoEjecutar["error"] = True
-        procesoEjecutar["resultado"] = "Error"
-        procesoEjecutar["tiempoFinalizacion"] = contadorGlobal
-        procesoEjecutar["tiempoRetorno"] = procesoEjecutar["tiempoFinalizacion"] - procesoEjecutar["tiempoLlegada"]
-        procesoEjecutar["tiempoServicio"] = procesoEjecutar["tiempoTrans"]
-        procesoEjecutar["tiempoEspera"] = procesoEjecutar["tiempoRetorno"] - procesoEjecutar["tiempoServicio"]
-
-        procesosTerminadosList.append(procesoEjecutar)
-        procesoEjecutar = None
-        time.sleep(0.1)
-        break
+        mostrarTabla = False
+      elif char.lower() == b'n':
+        #*Crea un nuevo proceso
+        newTiempo = generaTiempo()
+        newOperaciones = generaOperacion()
+        auxProceso = {
+          "id": generaId(),
+          "tiempo": newTiempo,
+          "tiempoEstimado": newTiempo,
+          "operacion": newOperaciones["operacion"],
+          "operacionStr": newOperaciones["operacionStr"],
+          "fNum": newOperaciones["fNum"],
+          "sNum": newOperaciones["sNum"],
+          "resultado": 0,
+          "error": False,
+          "tiempoTrans": 0,
+          "tiempoLlegada": 0,
+          "tiempoFinalizacion": 0,
+          "tiempoRetorno": 0,
+          "tiempoEspera": 0,
+          "tiempoRespuesta": 0,
+          "tiempoServicio": 0,
+          "timeOut": 0,
+          "banderaRespuesta": False
+        }
+        #*Si hay espacio en la memoria principal, se agrega el proceso
+        if (len(memoriaPrincipal) + len(procesosBloqueados)) < 3:
+          memoriaPrincipal.append(auxProceso)
+        else:
+          procesos.append(auxProceso)
+      elif char.lower() == b'b':
+        mostrarTabla = True
+        pausa = True
     if pausa:
       while pausa:
-        cambiaPausa()
+        if(mostrarTabla):
+          tablaPausa = []
+          #!Muestra la tabla "final"
+          #?Para todos los procesos en no terminados se agrega el tiempo restante de CPU(tiempoEstimado)
+          #*Comprueba si hay procesos terminados
+          if len(procesosTerminadosList) > 0:
+            for proceso in procesosTerminadosList:
+              tiemposProceso = f"Tiempo llegada: {proceso['tiempoLlegada']}\nTiempo finalizacion: {proceso['tiempoFinalizacion']}\nTiempo retorno: {proceso['tiempoRetorno']}\nTiempo espera: {proceso['tiempoEspera']}\nTiempo respuesta: {proceso['tiempoRespuesta']}\nTiempo servicio: {proceso['tiempoServicio']}"
+              tablaPausa.append([proceso["id"], "Terminado", proceso["operacionStr"], f"{proceso['fNum']} {proceso['sNum']}", proceso["resultado"] if not proceso["error"] else "Error", tiemposProceso])
+          
+          #*Procesos nuevos
+          if len(procesos) > 0:
+            for proceso in procesos:
+              tablaPausa.append([proceso["id"], "Nuevo", proceso["operacionStr"], f"{proceso['fNum']} {proceso['sNum']}", "No ha iniciado", "No ha iniciado"])
+
+          #*Procesos listos
+          if len(memoriaPrincipal) > 0:
+            for proceso in memoriaPrincipal:
+              #*Se calculan los tiempos necesarios
+              proceso["tiempoServicio"] = proceso["tiempoTrans"]
+              proceso["tiempoEspera"] = max(0, (contadorGlobal - proceso["tiempoLlegada"]) - proceso["tiempoServicio"])
+              tiemposProceso = f"Tiempo llegada: {proceso['tiempoLlegada']}\nTiempo finalizacion: No terminado\nTiempo retorno: No terminado\nTiempo espera: {proceso['tiempoEspera']}\nTiempo respuesta: {proceso['tiempoRespuesta']}\nTiempo servicio: {proceso['tiempoServicio']}\nTiempo restante CPU: {proceso['tiempoEstimado']}"
+              tablaPausa.append([proceso["id"], "Listo",proceso["operacionStr"], f"{proceso['fNum']} {proceso['sNum']}", "No ha terminado", tiemposProceso])
+
+          if len(procesosBloqueados) > 0:
+            for proceso in procesosBloqueados:
+              proceso["tiempoServicio"] = proceso["tiempoTrans"]
+              
+              proceso["tiempoEspera"] = max(0, (contadorGlobal - proceso["tiempoLlegada"]) - proceso["tiempoServicio"])
+              #?En bloqueados se muestra el tiempo que lleva (timeOut)
+              tiemposProceso = f"Tiempo llegada: {proceso['tiempoLlegada']}\nTiempo finalizacion: No terminado\nTiempo retorno: No terminado\nTiempo espera: {proceso['tiempoEspera']}\nTiempo respuesta: {proceso['tiempoRespuesta']}\nTiempo servicio: {proceso['tiempoServicio']}\nBloqueo restante: {8 - proceso['timeOut']}\nTiempo restante CPU: {proceso['tiempoEstimado']}"
+              tablaPausa.append([proceso["id"], "Bloqueado",proceso["operacionStr"], f"{proceso['fNum']} {proceso['sNum']}", "No ha terminado", tiemposProceso])
+
+          #?Al final se muestra el proceso en ejecucion
+          if procesoEjecutar is not None:
+            procesoEjecutar["tiempoServicio"] = procesoEjecutar["tiempoTrans"]
+            procesoEjecutar["tiempoEspera"] = max(0, contadorGlobal - procesoEjecutar["tiempoLlegada"] - procesoEjecutar["tiempoServicio"])
+            tiemposProceso = f"Tiempo llegada: {procesoEjecutar['tiempoLlegada']}\nTiempo finalizacion: No terminado\nTiempo retorno: No terminado\nTiempo espera: {procesoEjecutar['tiempoEspera']}\nTiempo respuesta: {procesoEjecutar['tiempoRespuesta']}\nTiempo servicio: {procesoEjecutar['tiempoServicio']}\nTiempo restante CPU: {procesoEjecutar['tiempoEstimado']}"
+            procesoEjecutando = f"ID: {procesoEjecutar['id']}\nOperacion: {procesoEjecutar['operacionStr']}\nValores: {procesoEjecutar['fNum']} {procesoEjecutar['sNum']}\nTiempo transcurrido: {procesoEjecutar['tiempoTrans']}\nTiempo restante: {procesoEjecutar['tiempoEstimado']}"
+            tablaPausa.append([procesoEjecutar["id"], "Ejecutando", procesoEjecutar["operacionStr"], f"{procesoEjecutar['fNum']} {procesoEjecutar['sNum']}", "No ha terminado", tiemposProceso])
+
+          sys.stdout.write('\033[H')
+          sys.stdout.write(tabulate(tablaPausa, headers=columnasPausa, tablefmt='fancy_grid'))
+          sys.stdout.flush()
+        
+        if getWatch():
+          char = msvcrt.getch()
+          if char.lower() == b'c':
+            pausa = False
+            mostrarTabla = False
+            os.system("cls")
         time.sleep(0.1)
 
     for proceso in procesosBloqueados:
@@ -153,7 +207,7 @@ while len(procesos) > 0 or len(memoriaPrincipal) > 0:
     memoriaListos = ""
 
     procesoEjecutando = ""
-    procesosBloq = "\n".join([f"ID: {proceso['id']} | Tiempo restante: {proceso['timeOut']}" for proceso in procesosBloqueados])
+    procesosBloq = "\n".join([f"ID: {proceso['id']} | Tiempo restante: {8 - proceso['timeOut']}" for proceso in procesosBloqueados])
 
     if len(procesosTerminadosList) > 0:
       procesosTerminados = "\n".join([f"ID: {proceso['id']} | Operacion: {proceso['operacionStr']}\nDatos: {proceso['fNum']} {proceso['sNum']} | {'Resultado: '+str(proceso['resultado']) if not proceso['error'] else 'Error'}\n" for ind, proceso in enumerate(procesosTerminadosList)])
@@ -174,14 +228,18 @@ while len(procesos) > 0 or len(memoriaPrincipal) > 0:
     newProceso["tiempoLlegada"] = contadorGlobal
     memoriaPrincipal.append(newProceso)
 
-  while(procesoEjecutar["tiempoEstimado"] > 0):
+  while(procesoEjecutar["tiempoEstimado"] > 1):
 
+    contadorGlobal += 1
+
+    #!Casos de interrupcion o error
     if getWatch():
       char = msvcrt.getch()
       if char.lower() == b'p':
         pausa = True
       elif char.lower() == b'c':
         pausa = False
+        mostrarTabla = False
       elif char.lower() == b'e':
         procesosBloqueados.append(procesoEjecutar)
         procesoEjecutar = None
@@ -199,17 +257,99 @@ while len(procesos) > 0 or len(memoriaPrincipal) > 0:
         procesoEjecutar = None
         time.sleep(0.1)
         break
+      elif char.lower() == b'n':
+        #*Crea un nuevo proceso
+        newTiempo = generaTiempo()
+        newOperaciones = generaOperacion()
+        auxProceso = {
+          "id": generaId(),
+          "tiempo": newTiempo,
+          "tiempoEstimado": newTiempo,
+          "operacion": newOperaciones["operacion"],
+          "operacionStr": newOperaciones["operacionStr"],
+          "fNum": newOperaciones["fNum"],
+          "sNum": newOperaciones["sNum"],
+          "resultado": 0,
+          "error": False,
+          "tiempoTrans": 0,
+          "tiempoLlegada": 0,
+          "tiempoFinalizacion": 0,
+          "tiempoRetorno": 0,
+          "tiempoEspera": 0,
+          "tiempoRespuesta": 0,
+          "tiempoServicio": 0,
+          "timeOut": 0,
+          "banderaRespuesta": False
+        }
+        #*Si hay espacio en la memoria principal, se agrega el proceso
+        if (len(memoriaPrincipal) + len(procesosBloqueados)) < 3:
+          memoriaPrincipal.append(auxProceso)
+        else:
+          procesos.append(auxProceso)
+      elif char.lower() == b'b':
+        mostrarTabla = True
+        pausa = True
     if pausa:
       while pausa:
-        cambiaPausa()
+        if(mostrarTabla):
+          tablaPausa = []
+          #!Muestra la tabla "final"
+          #?Para todos los procesos en no terminados se agrega el tiempo restante de CPU(tiempoEstimado)
+          #*Comprueba si hay procesos terminados
+          if len(procesosTerminadosList) > 0:
+            for proceso in procesosTerminadosList:
+              tiemposProceso = f"Tiempo llegada: {proceso['tiempoLlegada']}\nTiempo finalizacion: {proceso['tiempoFinalizacion']}\nTiempo retorno: {proceso['tiempoRetorno']}\nTiempo espera: {proceso['tiempoEspera']}\nTiempo respuesta: {proceso['tiempoRespuesta']}\nTiempo servicio: {proceso['tiempoServicio']}"
+              tablaPausa.append([proceso["id"], "Terminado", proceso["operacionStr"], f"{proceso['fNum']} {proceso['sNum']}", proceso["resultado"] if not proceso["error"] else "Error", tiemposProceso])
+          
+          #*Procesos nuevos
+          if len(procesos) > 0:
+            for proceso in procesos:
+              tablaPausa.append([proceso["id"], "Nuevo", proceso["operacionStr"], f"{proceso['fNum']} {proceso['sNum']}", "No ha iniciado", "No ha iniciado"])
+
+          #*Procesos listos
+          if len(memoriaPrincipal) > 0:
+            for proceso in memoriaPrincipal:
+              #*Se calculan los tiempos necesarios
+              proceso["tiempoServicio"] = proceso["tiempoTrans"]
+              proceso["tiempoEspera"] = max(0, (contadorGlobal - proceso["tiempoLlegada"]) - proceso["tiempoServicio"])
+              tiemposProceso = f"Tiempo llegada: {proceso['tiempoLlegada']}\nTiempo finalizacion: No terminado\nTiempo retorno: No terminado\nTiempo espera: {proceso['tiempoEspera']}\nTiempo respuesta: {proceso['tiempoRespuesta']}\nTiempo servicio: {proceso['tiempoServicio']}\nTiempo restante CPU: {proceso['tiempoEstimado']}"
+              tablaPausa.append([proceso["id"], "Listo",proceso["operacionStr"], f"{proceso['fNum']} {proceso['sNum']}", "No ha terminado", tiemposProceso])
+
+          if len(procesosBloqueados) > 0:
+            for proceso in procesosBloqueados:
+              proceso["tiempoServicio"] = proceso["tiempoTrans"]
+              
+              proceso["tiempoEspera"] = max(0, (contadorGlobal - proceso["tiempoLlegada"]) - proceso["tiempoServicio"])
+              #?En bloqueados se muestra el tiempo que lleva (timeOut)
+              tiemposProceso = f"Tiempo llegada: {proceso['tiempoLlegada']}\nTiempo finalizacion: No terminado\nTiempo retorno: No terminado\nTiempo espera: {proceso['tiempoEspera']}\nTiempo respuesta: {proceso['tiempoRespuesta']}\nTiempo servicio: {proceso['tiempoServicio']}\nBloqueo restante: {8 - proceso['timeOut']}\nTiempo restante CPU: {proceso['tiempoEstimado']}"
+              tablaPausa.append([proceso["id"], "Bloqueado",proceso["operacionStr"], f"{proceso['fNum']} {proceso['sNum']}", "No ha terminado", tiemposProceso])
+
+          #?Al final se muestra el proceso en ejecucion
+          if procesoEjecutar is not None:
+            procesoEjecutar["tiempoServicio"] = procesoEjecutar["tiempoTrans"]
+            procesoEjecutar["tiempoEspera"] = max(0, contadorGlobal - procesoEjecutar["tiempoLlegada"] - procesoEjecutar["tiempoServicio"])
+            tiemposProceso = f"Tiempo llegada: {procesoEjecutar['tiempoLlegada']}\nTiempo finalizacion: No terminado\nTiempo retorno: No terminado\nTiempo espera: {procesoEjecutar['tiempoEspera']}\nTiempo respuesta: {procesoEjecutar['tiempoRespuesta']}\nTiempo servicio: {procesoEjecutar['tiempoServicio']}\nTiempo restante CPU: {procesoEjecutar['tiempoEstimado']}"
+            procesoEjecutando = f"ID: {procesoEjecutar['id']}\nOperacion: {procesoEjecutar['operacionStr']}\nValores: {procesoEjecutar['fNum']} {procesoEjecutar['sNum']}\nTiempo transcurrido: {procesoEjecutar['tiempoTrans']}\nTiempo restante: {procesoEjecutar['tiempoEstimado']}"
+            tablaPausa.append([procesoEjecutar["id"], "Ejecutando", procesoEjecutar["operacionStr"], f"{procesoEjecutar['fNum']} {procesoEjecutar['sNum']}", "No ha terminado", tiemposProceso])
+
+          sys.stdout.write('\033[H')
+          sys.stdout.write(tabulate(tablaPausa, headers=columnasPausa, tablefmt='fancy_grid'))
+          sys.stdout.flush()
+        
+        if getWatch():
+          char = msvcrt.getch()
+          if char.lower() == b'c':
+            pausa = False
+            mostrarTabla = False
+            os.system("cls")
         time.sleep(0.1)
-      
+
     #*Tiempos de respuesta
     if not procesoEjecutar["banderaRespuesta"]:
-      procesoEjecutar["tiempoRespuesta"] = contadorGlobal
+      procesoEjecutar["tiempoRespuesta"] = contadorGlobal - 1
       procesoEjecutar["banderaRespuesta"] = True
     
-    contadorGlobal += 1
+    #contadorGlobal += 1
 
     #*Modifica los valores de tiempos
     procesoEjecutar["tiempoTrans"] += 1
@@ -232,7 +372,7 @@ while len(procesos) > 0 or len(memoriaPrincipal) > 0:
     procesoEjecutando = f"ID: {procesoEjecutar['id']}\nOperacion: {procesoEjecutar['operacionStr']}\nValores: {procesoEjecutar['fNum']} {procesoEjecutar['sNum']}\nTiempo transcurrido: {procesoEjecutar['tiempoTrans']}\nTiempo restante: {procesoEjecutar['tiempoEstimado']}"
 
     if len(procesosBloqueados) > 0:
-      procesosBloq = "\n".join([f"ID: {proceso['id']} | Tiempo restante: {proceso['timeOut']}" for proceso in procesosBloqueados])
+      procesosBloq = "\n".join([f"ID: {proceso['id']} | Tiempo restante: {8 - proceso['timeOut']}" for proceso in procesosBloqueados])
     else:
       procesosBloq = "No hay\nprocesos bloqueados"
 
@@ -246,36 +386,8 @@ while len(procesos) > 0 or len(memoriaPrincipal) > 0:
     sys.stdout.write('\033[H')
     sys.stdout.write(tabulate([fila], headers=columnas, tablefmt='fancy_grid'))
     sys.stdout.flush()
+
     time.sleep(1)
-
-    #!Casos de interrupcion o error
-    if getWatch():
-      char = msvcrt.getch()
-      if char.lower() == b'p':
-        pausa = True
-      elif char.lower() == b'c':
-        pausa = False
-      elif char.lower() == b'e':
-        procesosBloqueados.append(procesoEjecutar)
-        procesoEjecutar = None
-        time.sleep(0.1)
-        break
-      elif char.lower() == b'w':
-        procesoEjecutar["error"] = True
-        procesoEjecutar["resultado"] = "Error"
-        procesoEjecutar["tiempoFinalizacion"] = contadorGlobal
-        procesoEjecutar["tiempoRetorno"] = procesoEjecutar["tiempoFinalizacion"] - procesoEjecutar["tiempoLlegada"]
-        procesoEjecutar["tiempoServicio"] = procesoEjecutar["tiempoTrans"]
-        procesoEjecutar["tiempoEspera"] = procesoEjecutar["tiempoRetorno"] - procesoEjecutar["tiempoServicio"]
-
-        procesosTerminadosList.append(procesoEjecutar)
-        procesoEjecutar = None
-        time.sleep(0.1)
-        break
-    if pausa:
-      while pausa:
-        cambiaPausa()
-        time.sleep(0.1)
   
   os.system("cls")
 

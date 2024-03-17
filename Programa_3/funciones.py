@@ -61,3 +61,33 @@ def generarOperaciones(p: int):
       "operacionStr": operacionStr,
     })
   return operaciones
+
+def generaTiempo():
+  return random.randint(5, 18)
+
+def generaId():
+  return random.randint(1000, 9999)
+
+def generaOperacion():
+  a, b = random.randint(1, 1000), random.randint(1, 1000)
+  operacion = random.randint(1, 5)
+  if b == 0 and (operacion == 5 or operacion == 4):
+    operacion = 1
+
+  #*Crea el string de operacion
+  if operacion == 1:
+    operacionStr = "+"
+  elif operacion == 2:
+    operacionStr = "-"
+  elif operacion == 3:
+    operacionStr = "*"
+  elif operacion == 4:
+    operacionStr = "/"
+  elif operacion == 5:
+    operacionStr = "%"
+  return {
+    "fNum": a,
+    "sNum": b, 
+    "operacion": operacion,
+    "operacionStr": operacionStr,
+  }
