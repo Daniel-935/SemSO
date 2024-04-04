@@ -76,7 +76,7 @@ def getNewOperacion():
     "operacionStr": operacionStr
   }
 
-def generaProcesos(p: int):
+def generaProcesos(p: int, q: int):
   auxProcesos = []
   #*Genera copia de cada lista que obtiene
   ids = getIds(p)
@@ -103,11 +103,13 @@ def generaProcesos(p: int):
       "tiempoRespuesta": 0,
       "tiempoServicio": 0,
       "timeOut": 0,
-      "banderaRespuesta": False
+      "banderaRespuesta": False,
+      "quantum": q,
+      "bloqueado": False
     })
   return auxProcesos
 
-def generaProceso():
+def generaProceso(q: int):
   id = getNewId()
   tiempo = getNewTiempo()
   operacion = getNewOperacion()
@@ -129,21 +131,23 @@ def generaProceso():
     "tiempoRespuesta": 0,
     "tiempoServicio": 0,
     "timeOut": 0,
-    "banderaRespuesta": False
+    "banderaRespuesta": False,
+    "quantum": q,
+    "bloqueado": False
   }
 
 #!Funciones para mostrar la tabla
-def getTablaEjecucion(procesosListos: list, procesosBloqueados: list, procesosNuevos: list, procesosTerminados: list, procesoEjecutar: dict, contadorGlobal: int):
+def getTablaEjecucion(procesosListos: list, procesosBloqueados: list, procesosNuevos: list, procesosTerminados: list, procesoEjecutar: dict, contadorGlobal: int ,q: int):
 
   #*Creo la linea a mostrar en la tabla
   bloqueadosStr = ""
   terminadosStr = ""
-  datosGenerales = f"Contador global: {contadorGlobal}\nProcesos nuevos: {len(procesosNuevos)}"
+  datosGenerales = f"Contador global: {contadorGlobal}\nProcesos nuevos: {len(procesosNuevos)}\nQuantum: {q}"
   listosStr = "\n".join([f"ID: {proceso['id']} | Tiempo estimado: {proceso['tiempoRestante']} | Tiempo transcurrido: {proceso["tiempoTrans"]}" for proceso in procesosListos])
-  ejecutandoStr = f"ID: {procesoEjecutar['id']}\nOperacion: {procesoEjecutar["operacionStr"]}\nValores: {procesoEjecutar['fNum']} {procesoEjecutar['sNum']}\nTiempo transcurrido: {procesoEjecutar['tiempoTrans']}\nTiempo restante: {procesoEjecutar['tiempoRestante']}"
+  ejecutandoStr = f"ID: {procesoEjecutar['id']}\nOperacion: {procesoEjecutar["operacionStr"]}\nValores: {procesoEjecutar['fNum']} {procesoEjecutar['sNum']}\nTiempo transcurrido: {procesoEjecutar['tiempoTrans']}\nTiempo restante: {procesoEjecutar['tiempoRestante']}\nQuantum restante: {procesoEjecutar['quantum']}"
 
   if len(procesosBloqueados) > 0:
-    bloqueadosStr = "\n".join([f"ID: {proceso['id']} | Tiempo restante: {7 - proceso['timeOut']}" for proceso in procesosBloqueados])
+    bloqueadosStr = "\n".join([f"ID: {proceso['id']} | Tiempo restante: {8 - proceso['timeOut']}" for proceso in procesosBloqueados])
 
   if len(procesosTerminados) > 0:
     terminadosStr = "\n".join([f"ID: {proceso['id']} | Operacion: {proceso['operacionStr']}\nDatos: {proceso['fNum']} {proceso['sNum']} | {'Resultado: '+str(proceso['resultado']) if not proceso['error'] else 'Error'}\n" for proceso in procesosTerminados])
@@ -183,7 +187,7 @@ def getTablaPausa(procesosTerminados: list, procesosNuevos: list, procesosListos
   if len(procesosBloqueados) > 0:
     for proceso in procesosBloqueados:
       calculaTiempos(proceso, contadorGlobal, 2)
-      tiemposBloqueado = f"Tiempo llegada: {proceso['tiempoLlegada']}\nTiempo finalizacion: No terminado\nTiempo retorno: No terminado\nTiempo espera: {proceso['tiempoEspera']}\nTiempo respuesta: {proceso['tiempoRespuesta'] if not proceso['banderaRespuesta'] else 'No ha iniciado'}\nTiempo servicio: {proceso['tiempoServicio']}\nBloqueo restante: {7 - proceso['timeOut']}"
+      tiemposBloqueado = f"Tiempo llegada: {proceso['tiempoLlegada']}\nTiempo finalizacion: No terminado\nTiempo retorno: No terminado\nTiempo espera: {proceso['tiempoEspera']}\nTiempo respuesta: {proceso['tiempoRespuesta'] if proceso['banderaRespuesta'] else 'No ha iniciado'}\nTiempo servicio: {proceso['tiempoServicio']}\nBloqueo restante: {7 - proceso['timeOut']}"
       tablaPausa.append([proceso["id"], "Bloqueado", proceso["operacionStr"], f"{proceso['fNum']} {proceso['sNum']}", "No ha terminado", tiemposBloqueado])
 
   if procesoEjecutar is not None:
