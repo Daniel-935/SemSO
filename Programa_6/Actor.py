@@ -12,6 +12,12 @@ class Actor:
     def increaseInd(self):
         self.indice += 1
     
+    def getIndxCircular(self, t: int):
+        return (self.indice % t)
+    
+    def getNextIndx(self, t: int):
+        return (self.indice + 1) % t
+
     #*Si esta dormido o no
     def getEstado(self):
         return self.dormido
