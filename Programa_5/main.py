@@ -25,7 +25,7 @@ while True:
 while True:
   try:
     quantum = int(input("Ingrese el quantum deseado: "))
-    if quantum < 5 or quantum >= 15:
+    if quantum < 5 or quantum >= 18:
       print("Por favor, ingrese un numero valido de quantum.")
       input("Presione <enter> para continuar")
       os.system("cls")
@@ -175,26 +175,6 @@ while len(procesosListos) > 0 or len(procesosBloqueados) > 0 or len(procesosNuev
       #*Si no termino, se reinicia el quantum y se envia a la cola de listos
       procesoEjecutar["quantum"] = quantum
       procesosListos.append(procesoEjecutar)
-
-  #*Proceso termina
-  # if procesoEjecutar is not None and procesoEjecutar["tiempoRestante"] == 0:
-  #   if procesoEjecutar["error"]:
-  #     procesosTerminados.append(procesoEjecutar)
-  #   else:
-  #     if procesoEjecutar["operacion"] == 1:
-  #       procesoEjecutar["resultado"] = suma(procesoEjecutar["fNum"], procesoEjecutar["sNum"])
-  #     elif procesoEjecutar["operacion"] == 2:
-  #       procesoEjecutar["resultado"] = resta(procesoEjecutar["fNum"], procesoEjecutar["sNum"])
-  #     elif procesoEjecutar["operacion"] == 3:
-  #       procesoEjecutar["resultado"] = multiplicacion(procesoEjecutar["fNum"], procesoEjecutar["sNum"])
-  #     elif procesoEjecutar["operacion"] == 4:
-  #       procesoEjecutar["resultado"] = division(procesoEjecutar["fNum"], procesoEjecutar["sNum"])
-  #     elif procesoEjecutar["operacion"] == 5:
-  #       procesoEjecutar["resultado"] = modulo(procesoEjecutar["fNum"], procesoEjecutar["sNum"])
-      
-  #     #*Obtiene los tiempos
-  #     calculaTiempos(procesoEjecutar, contadorGlobal, 1)
-  #     procesosTerminados.append(procesoEjecutar)
 
 #!Imprime la tabla final
 os.system("cls")
